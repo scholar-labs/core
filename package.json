@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@ast-grep/napi": "^0.28.0",
+    "yaml": "^2.5.1"
+  },
+  "type": "module"
+}
