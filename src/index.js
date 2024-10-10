@@ -1,9 +1,8 @@
 import * as core from '@ast-grep/napi';
 import { parseYaml } from './yaml-parser.js';
-import fs from 'fs';
 
 export function analyze(sourceCode, YamlRule) {
-    const rule = YamlRule.rule;
+    const rule = parseYaml(YamlRule).rule;
      
     // construct rule object
     const ruleObject = {"rule": rule};
