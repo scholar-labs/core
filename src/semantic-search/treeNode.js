@@ -8,8 +8,10 @@ parser.setLanguage(JavaScript);
 
 // returns array of matching nodes
 export async function find(sourceCode, pattern) {
+  
     // object to store final result
     let result = {};
+
     // object to store metavariables and their values
     let metavariables = {};
    
@@ -40,6 +42,31 @@ export async function find(sourceCode, pattern) {
 // formats code using prettier
 export function format(code) {
     return prettier.format(code, { semi: true, parser: 'babel' });
+}
+
+// Check if nodeA is inside nodeB (Check if nodeA has nodeB as a descendant)
+export function inside(nodeA, nodeB) {
+    return nodeA.startIndex >= nodeB.startIndex && nodeA.endIndex <= nodeB.endIndex;
+}
+
+// Check if nodeA precedes nodeB
+export function precedes(nodeA, nodeB) {
+    return nodeA.endIndex <= nodeB.startIndex;
+}
+
+// Check if nodeA follows nodeB
+export function follows(nodeA, nodeB) {
+    return nodeA.startIndex >= nodeB.endIndex;
+}
+
+// Check if nodeA has nodeB as a child
+export function has(nodeA, nodeB) {
+    for (let i = 0; i < nodeA.childCount; i++) {
+        if (nodeA.child(i) === nodeB) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function* traverseTree(tree) {
