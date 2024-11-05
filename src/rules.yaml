@@ -1,3 +1,0 @@
-id: sample
-rule:
-  pattern: console.log($A)
