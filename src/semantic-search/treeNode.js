@@ -89,8 +89,9 @@ function* traverseTree(tree) {
 function isWildcard(node) {
     return node && 
            node.type === 'comment' && 
-           node.text.trim() === WILDCARD_COMMENT;
+           node.text.trim() === '/* ... */';
 }
+
 
 /**
  * Gets the complete text content of a node and all its children
@@ -130,6 +131,7 @@ function isMetavariable(node) {
 function equalsWithMetavars(node1, node2, currentMetavars = {}) {
     if (!node1 || !node2) return { matches: false };
     
+    // Handle wildcard matches
     if (isWildcard(node2)) {
         return {
             matches: true,
@@ -138,17 +140,20 @@ function equalsWithMetavars(node1, node2, currentMetavars = {}) {
         };
     }
     
+    // Handle metavariable matches - now matches entire subtrees
     if (isMetavariable(node2)) {
         const metavarName = node2.text;
         const currentValue = currentMetavars[metavarName];
         const nodeText = getNodeText(node1);
         
         if (!currentValue) {
+            // First occurrence of this metavariable
             return {
                 matches: true,
                 metavariables: { ...currentMetavars, [metavarName]: nodeText }
             };
         } else {
+            // Subsequent occurrence - must match previous value
             return {
                 matches: currentValue === nodeText,
                 metavariables: currentMetavars
@@ -156,8 +161,10 @@ function equalsWithMetavars(node1, node2, currentMetavars = {}) {
         }
     }
     
+    // Normal node matching
     if (node1.type !== node2.type) return { matches: false };
     
+    // For leaf nodes
     if (node1.childCount === 0) {
         return {
             matches: node1.text === node2.text,
@@ -165,6 +172,7 @@ function equalsWithMetavars(node1, node2, currentMetavars = {}) {
         };
     }
     
+    // For non-leaf nodes, handle wildcards and normal matches in children
     let currentMetavariables = { ...currentMetavars };
     let sourceIndex = 0;
     let patternIndex = 0;
@@ -173,14 +181,17 @@ function equalsWithMetavars(node1, node2, currentMetavars = {}) {
         const patternChild = node2.child(patternIndex);
         
         if (isWildcard(patternChild)) {
+            // Try to match the rest of the pattern after the wildcard
             const remainingPattern = node2.child(patternIndex + 1);
             if (!remainingPattern) {
+                // Wildcard is the last element, consume all remaining source nodes
                 return {
                     matches: true,
                     metavariables: currentMetavariables
                 };
             }
             
+            // Try matching with different numbers of nodes consumed by the wildcard
             while (sourceIndex < node1.childCount) {
                 const nextSourceNode = node1.child(sourceIndex);
                 const nextResult = equalsWithMetavars(
@@ -218,6 +229,7 @@ function equalsWithMetavars(node1, node2, currentMetavars = {}) {
         }
     }
     
+    // Make sure we've consumed all source nodes unless there was a trailing wildcard
     return {
         matches: sourceIndex === node1.childCount,
         metavariables: currentMetavariables
