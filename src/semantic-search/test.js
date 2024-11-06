@@ -1,4 +1,4 @@
-import { find } from "./treeNode.js";
+import { find } from "./treeNode-current.js";
 
 const sourceCode = `
 const d=4;
@@ -14,7 +14,7 @@ function test() {
 `;
 
 const pattern = `
-$FUNC($ORM.get())
+$FUNC2($FUNC.get())
 `;
 
 const ans = await find(sourceCode, pattern);
