@@ -9,6 +9,33 @@ parser.setLanguage(JavaScript);
 const WILDCARD_COMMENT = '/* ... */';
 
 /**
+ * Gets the deepest single child of a node by traversing first children
+ * @param {Object} node - The starting node
+ * @returns {Object} The deepest single-child node
+ */
+function getDeepestSingleChild(node) {
+    let current = node;
+    while (current.childCount === 1) {
+        current = current.firstChild;
+    }
+    return current;
+}
+
+/**
+ * Formats code using prettier with consistent settings
+ * @param {string} code - The code to format
+ * @returns {Promise<string>} Formatted code
+ */
+export function format(code) {
+    // Don't add semicolons to pattern code
+    return prettier.format(code, { 
+        semi: false,
+        parser: 'babel',
+        singleQuote: true
+    });
+}
+
+/**
  * Finds all AST nodes in the source code that match a given pattern
  * @param {string} sourceCode - The source code to search through
  * @param {string} pattern - The pattern to match against
@@ -17,14 +44,20 @@ const WILDCARD_COMMENT = '/* ... */';
 export async function find(sourceCode, pattern) {
     const formattedSourceCode = await format(sourceCode);
     const formattedPattern = await format(pattern);
+    
+    // console.log('Pattern after formatting:', formattedPattern); // Debug logging
    
     const sourceTree = parser.parse(formattedSourceCode);
     const allNodes = Array.from(traverseTree(sourceTree));
-    const targetNode = parser.parse(formattedPattern).rootNode.firstChild;
+    const parsedPattern = parser.parse(formattedPattern);
+    const targetNode = getDeepestSingleChild(parsedPattern.rootNode);
+    
+    // console.log('Target node type:', targetNode.type); // Debug logging
    
     const matches = [];
    
     for(let sourceNode of allNodes) {
+        // console.log('Checking node:', sourceNode.type, getNodeText(sourceNode)); // Debug logging
         const matchResult = equalsWithMetavars(sourceNode, targetNode);
         if(matchResult.matches) {
             matches.push({
@@ -36,15 +69,6 @@ export async function find(sourceCode, pattern) {
     }
    
     return { nodes: matches };
-}
-
-/**
- * Formats code using prettier with consistent settings
- * @param {string} code - The code to format
- * @returns {Promise<string>} Formatted code
- */
-export function format(code) {
-    return prettier.format(code, { semi: true, parser: 'babel' });
 }
 
 /**
